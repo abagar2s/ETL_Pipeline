@@ -3,7 +3,7 @@ import sqlite3
 from datetime import datetime
 
 # OpenWeatherMap API configuration
-API_KEY = 'c1cb2d3577d444498b1e328a15ed5716'  # Replace with your OpenWeatherMap API key
+API_KEY = 'my api key'  # Replace with your OpenWeatherMap API key
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 CITY = "New York"  # Replace with your desired city
 UNITS = "metric"  # Use "imperial" for Fahrenheit
