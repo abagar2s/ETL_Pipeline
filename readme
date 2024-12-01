@@ -1,0 +1,125 @@
+# Weather Data ETL Pipeline
+
+This project automates the process of fetching, storing, and managing weather data from OpenWeatherMap using Python. The workflow involves three main steps: **Extract**, **Transform**, and **Load (ETL)**, which are described below:
+
+---
+
+## 1. Overview
+
+This project performs the following tasks:
+
+- Fetches real-time weather data for a specified city from the OpenWeatherMap API.
+- Processes the data to extract useful information such as temperature, humidity, wind speed, and more.
+- Stores the data in a structured SQLite database for future analysis.
+
+---
+
+## 2. Files in the Project
+
+### 1. `extract2.py`
+
+- **Purpose**: Python script to fetch and store weather data.
+- **Key Steps**:
+  - **Extract**: Connects to the OpenWeatherMap API and retrieves the current weather data.
+  - **Transform**: Formats the data into a structured dictionary.
+  - **Load**: Inserts the formatted data into a SQLite database (`weather_data.db`).
+
+### 2. `run_fetch_weather.bat`
+
+- **Purpose**: Batch file to automate the execution of `extract2.py`.
+- **How it Works**:
+  - Calls Python to execute the `extract2.py` script.
+  - Logs errors or outputs (if configured).
+
+---
+
+## 3. Project Workflow
+
+### Step 1: Extract
+
+- The script connects to the OpenWeatherMap API using the `requests` library.
+- It fetches weather data for a city specified in the script (default: New York).
+- **Required parameters**:
+  - **City Name**: Configured via the `CITY` variable.
+  - **API Key**: Replace the placeholder API key in `API_KEY` with your own from OpenWeatherMap.
+  - **Units**: Set to `"metric"` for Celsius or `"imperial"` for Fahrenheit.
+
+### Step 2: Transform
+
+- The script processes the raw JSON response from the API and extracts key data, including:
+  - City name, country, date and time.
+  - Temperature (current, feels-like, min, max), humidity, pressure.
+  - Weather description, condition, wind speed, and direction.
+  - Cloud coverage, visibility, sunrise, and sunset times.
+- Data is structured into a dictionary for easy handling.
+
+### Step 3: Load
+
+- Data is stored in an SQLite database (`weather_data.db`) using Python's `sqlite3` library.
+- The database schema (`weather` table) includes fields for all relevant weather details.
+
+---
+
+## 4. How to Use
+
+### Prerequisites
+
+- **Python 3.10 or higher** installed.
+- Required Python libraries:
+  - `requests`
+  - `sqlite3` (standard library)
+  - Install `requests` using:
+    ```bash
+    pip install requests
+    ```
+
+### Steps to Run
+
+1. **Configure API Key**:
+   - Replace the `API_KEY` placeholder in `extract2.py` with your OpenWeatherMap API key.
+
+2. **Run the Script Directly**:
+   - Execute `extract2.py` via Python:
+     ```bash
+     python extract2.py
+     ```
+
+3. **Automate with Batch File**:
+   - Double-click `run_fetch_weather.bat` or run it from the command prompt:
+     ```bash
+     C:\path\to\run_fetch_weather.bat
+     ```
+
+4. **Schedule Automation**:
+   - Use a task scheduler (e.g., Jenkins or Windows Task Scheduler) to execute `run_fetch_weather.bat` at regular intervals.
+
+---
+
+## 5. Output
+
+### Database:
+
+- Data is stored in `weather_data.db` under the `weather` table.
+- **Schema**:
+  ```sql
+  CREATE TABLE IF NOT EXISTS weather (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      city TEXT,
+      date TEXT,
+      temperature REAL,
+      feels_like REAL,
+      temp_min REAL,
+      temp_max REAL,
+      humidity REAL,
+      pressure REAL,
+      weather_condition TEXT,
+      weather_description TEXT,
+      icon TEXT,
+      visibility REAL,
+      wind_speed REAL,
+      wind_direction REAL,
+      cloud_coverage REAL,
+      sunrise TEXT,
+      sunset TEXT,
+      country TEXT
+  );
