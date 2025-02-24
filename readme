@@ -1,164 +1,115 @@
-# Weather and Air Pollution Data ETL Pipeline with Apache Airflow and PostgreSQL
+# 🌤️ Weather & Air Pollution ETL Pipeline with Airflow & PostgreSQL  
 
-This project automates the process of fetching, storing, and managing weather and air pollution data from OpenWeatherMap using Python and Apache Airflow. The workflow involves three main steps: **Extract**, **Transform**, and **Load (ETL)**, described below:
-
----
-
-## 1. Overview
-
-This project performs the following tasks:
-
-- Fetches real-time weather and air pollution data for a specified city from the OpenWeatherMap API.
-- Processes the data to extract useful information such as temperature, humidity, air quality index (AQI), and more.
-- Stores the data in a structured PostgreSQL database for future analysis.
+This project automates the extraction, transformation, and loading (**ETL**) of **real-time weather and air pollution data** using **Apache Airflow** and stores the processed data in **PostgreSQL**.
 
 ---
 
-## 2. Project Components
+## 📌 1. Overview  
 
-### Key Python File: `weather_etl.py`
+This **ETL pipeline** performs the following tasks:  
 
-- **Purpose**: Defines the ETL pipeline using Apache Airflow.
-- **Key Steps**:
-  - **Extract**: Connects to the OpenWeatherMap API and retrieves current weather and air pollution data.
-  - **Transform**: Formats the data into structured dictionaries.
-  - **Load**: Inserts the formatted data into PostgreSQL tables (`weather` and `air_pollution`).
-
----
-
-## 3. Project Workflow
-
-### Step 1: Extract
-
-- The pipeline connects to the OpenWeatherMap API using the `requests` library.
-- It fetches:
-  - **Weather Data**: Real-time weather information for a specified city.
-  - **Air Pollution Data**: Pollution levels for the same city, based on geographic coordinates (latitude and longitude).
-- **Required parameters**:
-  - **City Name**: Configured via the `CITY` variable.
-  - **API Key**: Replace the placeholder API key in `API_KEY` with your own from OpenWeatherMap.
-  - **Units**: Set to "metric" for Celsius or "imperial" for Fahrenheit.
-  - **Coordinates**: Latitude and longitude for air pollution data (default: New York).
-
-### Step 2: Transform
-
-- The pipeline processes the raw JSON response from the API and extracts key data:
-  - **Weather Data**:
-    - City name, country, date and time.
-    - Temperature (current, feels-like, min, max), humidity, pressure.
-    - Weather description, condition, and more.
-  - **Air Pollution Data**:
-    - Air Quality Index (AQI).
-    - Concentrations of CO, NO2, O3, PM2.5, etc.
-- Data is structured into dictionaries for easy handling.
-
-### Step 3: Load
-
-- Data is stored in PostgreSQL databases using the `psycopg2` library.
-- The database schema includes:
-  - A `weather` table for weather data.
-  - An `air_pollution` table for air pollution data.
-- The pipeline ensures that the database and tables exist, creating them if necessary.
+✔ **Extracts** real-time weather data from the [OpenWeatherMap API](https://openweathermap.org/)  
+✔ **Extracts** air pollution data using latitude/longitude coordinates  
+✔ **Transforms** data into a structured format  
+✔ **Loads & stores** weather and air quality data into a **PostgreSQL database**  
+✔ **Automates** execution using **Apache Airflow**  
+✔ **Logs** operations for debugging & monitoring  
 
 ---
 
-## 4. How to Use
+## ⚙ 2. Tech Stack  
 
-### Prerequisites
-
-- **Python 3.10 or higher** installed.
-- Required Python libraries:
-  - `requests`
-  - `psycopg2`
-  - `apache-airflow`
-  - Install the libraries using:
-    ```bash
-    pip install requests psycopg2 apache-airflow
-    ```
-- A running PostgreSQL database instance.
-
-### Steps to Run
-
-1. **Configure API Key and Database Credentials**:
-
-   - Replace the `API_KEY` placeholder with your OpenWeatherMap API key.
-   - Update `POSTGRES_CONFIG` with your PostgreSQL host, port, database name, username, and password.
-
-2. **Set Up Airflow**:
-
-   - Initialize Airflow:
-     ```bash
-     airflow db init
-     ```
-   - Start the Airflow webserver and scheduler:
-     ```bash
-     airflow webserver &
-     airflow scheduler &
-     ```
-   - Place the `weather_etl.py` file in the Airflow `dags` folder.
-
-3. **Run the Pipeline**:
-
-   - Access the Airflow web UI (default: `http://localhost:8080`).
-   - Enable the `weather_air_pollution_pipeline` DAG.
-
-4. **Monitor Outputs**:
-
-   - Check task logs in the Airflow UI for status.
-   - Verify data storage in PostgreSQL using a client tool like `psql`.
+🔹 **Python** - Used for API requests, data transformation & PostgreSQL interaction  
+🔹 **Apache Airflow** - DAG orchestration & scheduling  
+🔹 **PostgreSQL** - Storing structured weather & air pollution data  
+🔹 **Logging** - To track execution & errors  
 
 ---
 
-## 5. Output
+## 🔄 3. Workflow Steps  
 
-### PostgreSQL Database:
-
-- **Weather Table Schema**:
-  ```sql
-  CREATE TABLE IF NOT EXISTS weather (
-      id SERIAL PRIMARY KEY,
-      city TEXT,
-      date TIMESTAMP,
-      temperature REAL,
-      feels_like REAL,
-      humidity REAL,
-      pressure REAL,
-      weather_condition TEXT,
-      weather_description TEXT
-  );
-  ```
-
-- **Air Pollution Table Schema**:
-  ```sql
-  CREATE TABLE IF NOT EXISTS air_pollution (
-      id SERIAL PRIMARY KEY,
-      aqi INTEGER,
-      co REAL,
-      no2 REAL,
-      o3 REAL,
-      pm2_5 REAL
-  );
-  ```
+1️⃣ **Fetch Weather Data** → Calls OpenWeatherMap API for real-time weather  
+2️⃣ **Fetch Air Pollution Data** → Fetches AQI, CO, NO2, O3, PM2.5 levels  
+3️⃣ **Transform Data** → Extracts key information (temperature, humidity, air quality, etc.)  
+4️⃣ **Store in PostgreSQL** → Saves data in structured tables  
+5️⃣ **Schedule with Airflow** → Runs **hourly** automatically  
 
 ---
 
-## 6. Features
+## 📁 4. Project Structure  
 
-- **Dynamic Scheduling**: The Airflow DAG runs at configurable intervals (default: hourly).
-- **Database Management**: Ensures the PostgreSQL database and tables are created if they don’t already exist.
-- **Scalability**: Easily extendable to fetch data for multiple cities or integrate additional weather and pollution data sources.
+```plaintext
+📂 Weather_ETL_Airflow/
+├── 📄 etl_dag.py                # Airflow DAG definition
+├── 📄 requirements.txt          # Python dependencies
+├── 📄 .gitignore                # Excludes venv/ & sensitive files
+├── 📄 README.md                 # Project documentation
+├── 📄 pipeline.log              # Log file for debugging
+└── 📂 airflow/                  # Airflow home directory
+```
 
----
+## 🗄️ 5. PostgreSQL Database Schema  
 
-## 7. Troubleshooting
+### 📌 Weather Table (`weather`)  
 
-- Ensure PostgreSQL is running and accessible.
-- Check Airflow logs for detailed error messages.
-- Verify that the `API_KEY` and database credentials are correctly configured.
-- Adjust coordinates (latitude and longitude) for air pollution data if necessary.
-- Replace the email placeholder (`your_email@example.com`) in the script for Airflow alerts if needed.
+```sql
+CREATE TABLE IF NOT EXISTS weather (
+    id SERIAL PRIMARY KEY,
+    city TEXT,
+    date TIMESTAMP,
+    temperature REAL,
+    feels_like REAL,
+    humidity REAL,
+    pressure REAL,
+    weather_condition TEXT,
+    weather_description TEXT
+);
+```
+📌 Air Pollution Table (air_pollution)
 
----
+```sql
+CREATE TABLE IF NOT EXISTS air_pollution (
+    id SERIAL PRIMARY KEY,
+    aqi INTEGER,
+    co REAL,
+    no2 REAL,
+    o3 REAL,
+    pm2_5 REAL
+);
+```
+## 🚀 6. Setup & Run Instructions  
 
-With this pipeline, you can efficiently fetch and manage weather and air pollution data, ensuring your database remains up-to-date and ready for analysis.
+### 1️⃣ Clone the Repository  
 
+```bash
+git clone https://github.com/YOUR_USERNAME/Weather_ETL_Airflow.git
+cd Weather_ETL_Airflow
+```
+
+### 2️⃣ Set Up Virtual Environment & Install Dependencies
+```bash
+python -m venv airflow_env
+source airflow_env/bin/activate  # macOS/Linux
+airflow_env\Scripts\activate     # Windows
+
+pip install -r requirements.txt
+```
+
+### 3️⃣ Set Up Airflow
+```bash
+export AIRFLOW_HOME=$(pwd)/airflow  # Set Airflow home directory
+airflow db init                     # Initialize Airflow database
+airflow users create --username admin --password admin --role Admin --firstname Air --lastname Flow --email admin@example.com
+```
+
+### 4️⃣ Start Airflow Webserver & Scheduler
+
+```bash
+airflow webserver --port 8080  # Runs Airflow UI
+airflow scheduler              # Starts DAG execution
+```
+### 5️⃣ Monitor DAG in Airflow UI
+
+    Open http://localhost:8080 in your browser
+    Activate the DAG weather_air_pollution_pipeline
+    Monitor execution & logs
