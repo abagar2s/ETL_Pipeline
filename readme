@@ -1,6 +1,6 @@
-# Weather Data ETL Pipeline
+# Weather and Air Pollution Data ETL Pipeline with Apache Airflow and PostgreSQL
 
-This project automates the process of fetching, storing, and managing weather data from OpenWeatherMap using Python. The workflow involves three main steps: **Extract**, **Transform**, and **Load (ETL)**, which are described below:
+This project automates the process of fetching, storing, and managing weather and air pollution data from OpenWeatherMap using Python and Apache Airflow. The workflow involves three main steps: **Extract**, **Transform**, and **Load (ETL)**, described below:
 
 ---
 
@@ -8,28 +8,21 @@ This project automates the process of fetching, storing, and managing weather da
 
 This project performs the following tasks:
 
-- Fetches real-time weather data for a specified city from the OpenWeatherMap API.
-- Processes the data to extract useful information such as temperature, humidity, wind speed, and more.
-- Stores the data in a structured SQLite database for future analysis.
+- Fetches real-time weather and air pollution data for a specified city from the OpenWeatherMap API.
+- Processes the data to extract useful information such as temperature, humidity, air quality index (AQI), and more.
+- Stores the data in a structured PostgreSQL database for future analysis.
 
 ---
 
-## 2. Files in the Project
+## 2. Project Components
 
-### 1. `extract2.py`
+### Key Python File: `weather_etl.py`
 
-- **Purpose**: Python script to fetch and store weather data.
+- **Purpose**: Defines the ETL pipeline using Apache Airflow.
 - **Key Steps**:
-  - **Extract**: Connects to the OpenWeatherMap API and retrieves the current weather data.
-  - **Transform**: Formats the data into a structured dictionary.
-  - **Load**: Inserts the formatted data into a SQLite database (`weather_data.db`).
-
-### 2. `run_fetch_weather.bat`
-
-- **Purpose**: Batch file to automate the execution of `extract2.py`.
-- **How it Works**:
-  - Calls Python to execute the `extract2.py` script.
-  - Logs errors or outputs (if configured).
+  - **Extract**: Connects to the OpenWeatherMap API and retrieves current weather and air pollution data.
+  - **Transform**: Formats the data into structured dictionaries.
+  - **Load**: Inserts the formatted data into PostgreSQL tables (`weather` and `air_pollution`).
 
 ---
 
@@ -37,26 +30,35 @@ This project performs the following tasks:
 
 ### Step 1: Extract
 
-- The script connects to the OpenWeatherMap API using the `requests` library.
-- It fetches weather data for a city specified in the script (default: New York).
+- The pipeline connects to the OpenWeatherMap API using the `requests` library.
+- It fetches:
+  - **Weather Data**: Real-time weather information for a specified city.
+  - **Air Pollution Data**: Pollution levels for the same city, based on geographic coordinates (latitude and longitude).
 - **Required parameters**:
   - **City Name**: Configured via the `CITY` variable.
   - **API Key**: Replace the placeholder API key in `API_KEY` with your own from OpenWeatherMap.
-  - **Units**: Set to `"metric"` for Celsius or `"imperial"` for Fahrenheit.
+  - **Units**: Set to "metric" for Celsius or "imperial" for Fahrenheit.
+  - **Coordinates**: Latitude and longitude for air pollution data (default: New York).
 
 ### Step 2: Transform
 
-- The script processes the raw JSON response from the API and extracts key data, including:
-  - City name, country, date and time.
-  - Temperature (current, feels-like, min, max), humidity, pressure.
-  - Weather description, condition, wind speed, and direction.
-  - Cloud coverage, visibility, sunrise, and sunset times.
-- Data is structured into a dictionary for easy handling.
+- The pipeline processes the raw JSON response from the API and extracts key data:
+  - **Weather Data**:
+    - City name, country, date and time.
+    - Temperature (current, feels-like, min, max), humidity, pressure.
+    - Weather description, condition, and more.
+  - **Air Pollution Data**:
+    - Air Quality Index (AQI).
+    - Concentrations of CO, NO2, O3, PM2.5, etc.
+- Data is structured into dictionaries for easy handling.
 
 ### Step 3: Load
 
-- Data is stored in an SQLite database (`weather_data.db`) using Python's `sqlite3` library.
-- The database schema (`weather` table) includes fields for all relevant weather details.
+- Data is stored in PostgreSQL databases using the `psycopg2` library.
+- The database schema includes:
+  - A `weather` table for weather data.
+  - An `air_pollution` table for air pollution data.
+- The pipeline ensures that the database and tables exist, creating them if necessary.
 
 ---
 
@@ -67,59 +69,96 @@ This project performs the following tasks:
 - **Python 3.10 or higher** installed.
 - Required Python libraries:
   - `requests`
-  - `sqlite3` (standard library)
-  - Install `requests` using:
+  - `psycopg2`
+  - `apache-airflow`
+  - Install the libraries using:
     ```bash
-    pip install requests
+    pip install requests psycopg2 apache-airflow
     ```
+- A running PostgreSQL database instance.
 
 ### Steps to Run
 
-1. **Configure API Key**:
-   - Replace the `API_KEY` placeholder in `extract2.py` with your OpenWeatherMap API key.
+1. **Configure API Key and Database Credentials**:
 
-2. **Run the Script Directly**:
-   - Execute `extract2.py` via Python:
+   - Replace the `API_KEY` placeholder with your OpenWeatherMap API key.
+   - Update `POSTGRES_CONFIG` with your PostgreSQL host, port, database name, username, and password.
+
+2. **Set Up Airflow**:
+
+   - Initialize Airflow:
      ```bash
-     python extract2.py
+     airflow db init
      ```
-
-3. **Automate with Batch File**:
-   - Double-click `run_fetch_weather.bat` or run it from the command prompt:
+   - Start the Airflow webserver and scheduler:
      ```bash
-     C:\path\to\run_fetch_weather.bat
+     airflow webserver &
+     airflow scheduler &
      ```
+   - Place the `weather_etl.py` file in the Airflow `dags` folder.
 
-4. **Schedule Automation**:
-   - Use a task scheduler (e.g., Jenkins or Windows Task Scheduler) to execute `run_fetch_weather.bat` at regular intervals.
+3. **Run the Pipeline**:
+
+   - Access the Airflow web UI (default: `http://localhost:8080`).
+   - Enable the `weather_air_pollution_pipeline` DAG.
+
+4. **Monitor Outputs**:
+
+   - Check task logs in the Airflow UI for status.
+   - Verify data storage in PostgreSQL using a client tool like `psql`.
 
 ---
 
 ## 5. Output
 
-### Database:
+### PostgreSQL Database:
 
-- Data is stored in `weather_data.db` under the `weather` table.
-- **Schema**:
+- **Weather Table Schema**:
   ```sql
   CREATE TABLE IF NOT EXISTS weather (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       city TEXT,
-      date TEXT,
+      date TIMESTAMP,
       temperature REAL,
       feels_like REAL,
-      temp_min REAL,
-      temp_max REAL,
       humidity REAL,
       pressure REAL,
       weather_condition TEXT,
-      weather_description TEXT,
-      icon TEXT,
-      visibility REAL,
-      wind_speed REAL,
-      wind_direction REAL,
-      cloud_coverage REAL,
-      sunrise TEXT,
-      sunset TEXT,
-      country TEXT
+      weather_description TEXT
   );
+  ```
+
+- **Air Pollution Table Schema**:
+  ```sql
+  CREATE TABLE IF NOT EXISTS air_pollution (
+      id SERIAL PRIMARY KEY,
+      aqi INTEGER,
+      co REAL,
+      no2 REAL,
+      o3 REAL,
+      pm2_5 REAL
+  );
+  ```
+
+---
+
+## 6. Features
+
+- **Dynamic Scheduling**: The Airflow DAG runs at configurable intervals (default: hourly).
+- **Database Management**: Ensures the PostgreSQL database and tables are created if they don’t already exist.
+- **Scalability**: Easily extendable to fetch data for multiple cities or integrate additional weather and pollution data sources.
+
+---
+
+## 7. Troubleshooting
+
+- Ensure PostgreSQL is running and accessible.
+- Check Airflow logs for detailed error messages.
+- Verify that the `API_KEY` and database credentials are correctly configured.
+- Adjust coordinates (latitude and longitude) for air pollution data if necessary.
+- Replace the email placeholder (`your_email@example.com`) in the script for Airflow alerts if needed.
+
+---
+
+With this pipeline, you can efficiently fetch and manage weather and air pollution data, ensuring your database remains up-to-date and ready for analysis.
+
